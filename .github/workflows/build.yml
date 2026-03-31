@@ -3,18 +3,16 @@ name: Build YOYBypass
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch:          # Cho phép bấm nút Run manually trên GitHub
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout code của repo này
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Clone Theos (cross-compiler cho iOS tweak)
       - name: Setup Theos
         uses: actions/checkout@v4
         with:
@@ -23,15 +21,13 @@ jobs:
           path: theos
           submodules: recursive
 
-      # 3. Cache iOS SDK để lần sau build nhanh hơn
       - name: Cache iOS SDK
         id: cache-sdk
         uses: actions/cache@v4
         with:
           path: theos/sdks
-          key: iPhoneOS16.5.sdk
+          key: iPhoneOS16.5.sdk-v2
 
-      # 4. Download iOS 16.5 SDK (chỉ khi chưa có cache)
       - name: Download iOS SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
@@ -42,14 +38,21 @@ jobs:
           tar -xJf sdk.tar.xz -C theos/sdks/
           rm sdk.tar.xz
 
-      # 5. Cài các tool cần thiết trên Ubuntu
       - name: Install dependencies
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            curl perl make xz-utils ca-certificates
+            curl perl make xz-utils ca-certificates \
+            fakeroot dpkg-dev
 
-      # 6. Build tweak → tạo .deb
+      - name: Install ldid
+        run: |
+          curl -L \
+            "https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_linux_x86_64" \
+            -o ldid
+          sudo install -m755 ldid /usr/local/bin/ldid
+          ldid 2>/dev/null || true
+
       - name: Build
         env:
           THEOS: ${{ github.workspace }}/theos
@@ -59,7 +62,6 @@ jobs:
           echo "--- Built packages ---"
           ls -lh packages/ || echo "(no packages folder)"
 
-      # 7. Upload .deb thành artifact — download được trên GitHub
       - name: Upload .deb artifact
         uses: actions/upload-artifact@v4
         with:
