@@ -29,13 +29,13 @@ jobs:
           path: |
             theos/sdks
             theos/toolchain
-          key: theos-sdk16.5-toolchain-v2
+          key: theos-sdk14.5-toolchain-v1
 
       - name: Download iOS SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
           curl -L \
-            "https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz" \
+            "https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS14.5.sdk.tar.xz" \
             -o sdk.tar.xz
           mkdir -p theos/sdks
           tar -xJf sdk.tar.xz -C theos/sdks/
