@@ -36,7 +36,7 @@ jobs:
         if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
           curl -L \
-            "https://github.com/theos/sdks/releases/download/2024-10-13/iPhoneOS16.5.sdk.tar.xz" \
+            "https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz" \
             -o sdk.tar.xz
           mkdir -p theos/sdks
           tar -xJf sdk.tar.xz -C theos/sdks/
