@@ -42,8 +42,9 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            curl perl make xz-utils ca-certificates \
-            fakeroot dpkg-dev
+            clang llvm lld \
+            fakeroot dpkg-dev \
+            perl make curl ca-certificates xz-utils
 
       - name: Install ldid
         run: |
@@ -51,16 +52,13 @@ jobs:
             "https://github.com/ProcursusTeam/ldid/releases/download/v2.1.5-procursus7/ldid_linux_x86_64" \
             -o ldid
           sudo install -m755 ldid /usr/local/bin/ldid
-          ldid 2>/dev/null || true
 
       - name: Build
         env:
           THEOS: ${{ github.workspace }}/theos
           THEOS_PACKAGE_SCHEME: rootless
         run: |
-          make package FINALPACKAGE=1 2>&1
-          echo "--- Built packages ---"
-          ls -lh packages/ || echo "(no packages folder)"
+          make package FINALPACKAGE=1 messages=yes 2>&1
 
       - name: Upload .deb artifact
         uses: actions/upload-artifact@v4
