@@ -1,0 +1,9 @@
+Package: com.yourname.yoybypass
+Name: YOY Bypass
+Version: 1.0
+Architecture: iphoneos-arm64
+Description: Bypass YOY auth check - hooks all yoyy.dylib setters
+Section: Tweaks
+Author: You <you@example.com>
+Maintainer: You <you@example.com>
+Depends: mobilesubstrate

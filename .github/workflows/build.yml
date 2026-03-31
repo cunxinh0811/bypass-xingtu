@@ -1,0 +1,68 @@
+name: Build YOYBypass
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:          # Cho phép bấm nút Run manually trên GitHub
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code của repo này
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Clone Theos (cross-compiler cho iOS tweak)
+      - name: Setup Theos
+        uses: actions/checkout@v4
+        with:
+          repository: theos/theos
+          ref: master
+          path: theos
+          submodules: recursive
+
+      # 3. Cache iOS SDK để lần sau build nhanh hơn
+      - name: Cache iOS SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: theos/sdks
+          key: iPhoneOS16.5.sdk
+
+      # 4. Download iOS 16.5 SDK (chỉ khi chưa có cache)
+      - name: Download iOS SDK
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
+        run: |
+          curl -L \
+            "https://github.com/theos/sdks/releases/download/2024-10-13/iPhoneOS16.5.sdk.tar.xz" \
+            -o sdk.tar.xz
+          mkdir -p theos/sdks
+          tar -xJf sdk.tar.xz -C theos/sdks/
+          rm sdk.tar.xz
+
+      # 5. Cài các tool cần thiết trên Ubuntu
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            curl perl make xz-utils ca-certificates
+
+      # 6. Build tweak → tạo .deb
+      - name: Build
+        env:
+          THEOS: ${{ github.workspace }}/theos
+          THEOS_PACKAGE_SCHEME: rootless
+        run: |
+          make package FINALPACKAGE=1 2>&1
+          echo "--- Built packages ---"
+          ls -lh packages/ || echo "(no packages folder)"
+
+      # 7. Upload .deb thành artifact — download được trên GitHub
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YOYBypass-deb
+          path: packages/*.deb
+          if-no-files-found: error
